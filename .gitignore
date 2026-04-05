@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+*.db
+*.db-journal
+backend/prisma/migrations/
+frontend/dist/
+driver-app/dist/

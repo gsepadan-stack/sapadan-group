@@ -1,0 +1,413 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("STAFF")
+  cabangId  String?
+  cabang    Cabang?  @relation(fields: [cabangId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  salesOrders SalesOrder[]
+  auditLogs   AuditLog[]
+
+  @@map("users")
+}
+
+model Cabang {
+  id        String   @id @default(uuid())
+  name      String
+  address   String
+  phone     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  kolams      Kolam[]
+  salesOrders SalesOrder[]
+  vehicles    Vehicle[]
+
+  @@map("cabang")
+}
+
+model Product {
+  id         String   @id @default(uuid())
+  name       String
+  jenis      String
+  hargaPerKg Float
+  stokKg     Float
+  deskripsi  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model Customer {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  address   String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  salesOrders SalesOrder[]
+
+  @@map("customers")
+}
+
+model SalesOrder {
+  id              String      @id @default(uuid())
+  orderNumber     String      @unique
+  customerId      String
+  customer        Customer    @relation(fields: [customerId], references: [id])
+  customerName    String
+  customerPhone   String
+  customerAddress String
+  totalAmount     Float
+  status          String      @default("PENDING")
+  orderDate       DateTime
+  deliveryDate    DateTime?
+  notes           String?
+  createdBy       String
+  createdByUser   User        @relation(fields: [createdBy], references: [id])
+  cabangId        String?
+  cabang          Cabang?     @relation(fields: [cabangId], references: [id])
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  items OrderItem[]
+
+  @@map("sales_orders")
+}
+
+model OrderItem {
+  id          String     @id @default(uuid())
+  orderId     String
+  order       SalesOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product    @relation(fields: [productId], references: [id])
+  productName String
+  quantity    Float
+  pricePerKg  Float
+  subtotal    Float
+  createdAt   DateTime   @default(now())
+
+  @@map("order_items")
+}
+
+model Kolam {
+  id          String   @id @default(uuid())
+  name        String
+  jenisIkan   String
+  jumlahIkan  Int
+  mortalitas  Int      @default(0)
+  cabangId    String?
+  cabang      Cabang?  @relation(fields: [cabangId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  feedingLogs FeedingLog[]
+  healthLogs  HealthLog[]
+
+  @@map("kolam")
+}
+
+model FeedingLog {
+  id        String   @id @default(uuid())
+  kolamId   String
+  kolam     Kolam    @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+  jumlahKg  Float
+  jenisPakan String
+  tanggal   DateTime
+  catatan   String?
+  createdAt DateTime @default(now())
+
+  @@map("feeding_logs")
+}
+
+model HealthLog {
+  id        String   @id @default(uuid())
+  kolamId   String
+  kolam     Kolam    @relation(fields: [kolamId], references: [id], onDelete: Cascade)
+  tanggal   DateTime
+  kondisi   String
+  catatan   String?
+  createdAt DateTime @default(now())
+
+  @@map("health_logs")
+}
+
+model Supplier {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  address   String
+  email     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pakanPurchases PakanPurchase[]
+
+  @@map("suppliers")
+}
+
+model PakanPurchase {
+  id         String   @id @default(uuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  jenisPakan String
+  jumlahKg   Float
+  hargaPerKg Float
+  totalHarga Float
+  tanggal    DateTime
+  createdAt  DateTime @default(now())
+
+  @@map("pakan_purchases")
+}
+
+model Karyawan {
+  id        String   @id @default(uuid())
+  name      String
+  phone     String
+  address   String
+  position  String
+  gajiPokok Float
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  payrolls Payroll[]
+  lemburs  Lembur[]
+  tripLogs TripLog[]
+
+  @@map("karyawan")
+}
+
+model Payroll {
+  id         String   @id @default(uuid())
+  karyawanId String
+  karyawan   Karyawan @relation(fields: [karyawanId], references: [id])
+  bulan      String
+  tahun      Int
+  gajiPokok  Float
+  tunjangan  Float    @default(0)
+  potongan   Float    @default(0)
+  totalGaji  Float
+  createdAt  DateTime @default(now())
+
+  @@map("payroll")
+}
+
+model Lembur {
+  id         String   @id @default(uuid())
+  karyawanId String
+  karyawan   Karyawan @relation(fields: [karyawanId], references: [id])
+  tanggal    DateTime
+  jamMulai   String
+  jamSelesai String
+  totalJam   Float
+  upahPerJam Float
+  totalUpah  Float
+  approved   Boolean  @default(false)
+  approvedBy String?
+  createdAt  DateTime @default(now())
+
+  @@map("lembur")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  action    String
+  entity    String
+  entityId  String
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
+
+model Vehicle {
+  id            String   @id @default(uuid())
+  platNomor     String   @unique
+  merk          String
+  model         String
+  tahun         Int
+  jenis         String
+  kapasitas     Float
+  statusAktif   Boolean  @default(true)
+  cabangId      String?
+  cabang        Cabang?  @relation(fields: [cabangId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  maintenances  Maintenance[]
+  fuelLogs      FuelLog[]
+  tripLogs      TripLog[]
+
+  @@map("vehicles")
+}
+
+model Maintenance {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  tanggal     DateTime
+  jenis       String
+  deskripsi   String?
+  biaya       Float
+  kilometer   Int
+  bengkel     String?
+  createdAt   DateTime @default(now())
+
+  @@map("maintenances")
+}
+
+model FuelLog {
+  id          String   @id @default(uuid())
+  vehicleId   String
+  vehicle     Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  tanggal     DateTime
+  jumlahLiter Float
+  hargaPerLiter Float
+  totalBiaya  Float
+  kilometer   Int
+  lokasiPengisian String?
+  createdAt   DateTime @default(now())
+
+  @@map("fuel_logs")
+}
+
+model TripLog {
+  id              String   @id @default(uuid())
+  vehicleId       String
+  vehicle         Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  driverId        String?
+  driver          Karyawan? @relation(fields: [driverId], references: [id])
+  tanggal         DateTime
+  tujuan          String
+  kmAwal          Int
+  kmAkhir         Int
+  totalKm         Int
+  muatan          String?
+  catatan         String?
+  status          String   @default("ONGOING")
+  startTime       DateTime?
+  endTime         DateTime?
+  podPhoto        String?   // Proof of Delivery photo (base64)
+  podNote         String?   // Catatan penerimaan
+  podTime         DateTime? // Waktu konfirmasi terkirim
+  createdAt       DateTime @default(now())
+
+  locationLogs    LocationLog[]
+
+  @@map("trip_logs")
+}
+
+model LocationLog {
+  id          String   @id @default(uuid())
+  tripLogId   String
+  tripLog     TripLog  @relation(fields: [tripLogId], references: [id], onDelete: Cascade)
+  latitude    Float
+  longitude   Float
+  accuracy    Float?
+  speed       Float?
+  timestamp   DateTime @default(now())
+
+  @@map("location_logs")
+}
+
+// ===== MITRA PETANI =====
+
+model MitraPetani {
+  id          String   @id @default(uuid())
+  nomorSlot   Int      @unique  // 1-20
+  name        String
+  phone       String
+  address     String
+  jenisIkan   String
+  luasKolam   Float    @default(0)  // m2
+  status      String   @default("AKTIF") // AKTIF, PANEN, NONAKTIF
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  transaksiPakan    MitraTransaksiPakan[]
+  transaksiPinjaman MitraTransaksiPinjaman[]
+  transaksiPanen    MitraTransaksiPanen[]
+  transaksiPibit    MitraTransaksiBibit[]
+
+  @@map("mitra_petani")
+}
+
+model MitraTransaksiBibit {
+  id          String      @id @default(uuid())
+  mitraId     String
+  mitra       MitraPetani @relation(fields: [mitraId], references: [id], onDelete: Cascade)
+  tanggal     DateTime
+  jumlahEkor  Int
+  hargaPerEkor Float
+  totalHarga  Float
+  jenisIkan   String
+  catatan     String?
+  createdAt   DateTime    @default(now())
+
+  @@map("mitra_transaksi_bibit")
+}
+
+model MitraTransaksiPakan {
+  id          String      @id @default(uuid())
+  mitraId     String
+  mitra       MitraPetani @relation(fields: [mitraId], references: [id], onDelete: Cascade)
+  tanggal     DateTime
+  jenisPakan  String
+  jumlahKg    Float
+  hargaPerKg  Float
+  totalHarga  Float
+  catatan     String?
+  createdAt   DateTime    @default(now())
+
+  @@map("mitra_transaksi_pakan")
+}
+
+model MitraTransaksiPinjaman {
+  id          String      @id @default(uuid())
+  mitraId     String
+  mitra       MitraPetani @relation(fields: [mitraId], references: [id], onDelete: Cascade)
+  tanggal     DateTime
+  jumlah      Float
+  keterangan  String
+  lunas       Boolean     @default(false)
+  createdAt   DateTime    @default(now())
+
+  @@map("mitra_transaksi_pinjaman")
+}
+
+model MitraTransaksiPanen {
+  id              String      @id @default(uuid())
+  mitraId         String
+  mitra           MitraPetani @relation(fields: [mitraId], references: [id], onDelete: Cascade)
+  tanggal         DateTime
+  jumlahKg        Float
+  hargaPerKg      Float
+  totalHasilPanen Float
+  totalHutang     Float       // pakan + bibit + pinjaman saat panen
+  saldoBersih     Float       // totalHasilPanen - totalHutang
+  catatan         String?
+  createdAt       DateTime    @default(now())
+
+  @@map("mitra_transaksi_panen")
+}
