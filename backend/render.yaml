@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: sapadan-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install && npx prisma generate && npm run build && npx prisma migrate deploy && npx tsx prisma/seed.ts
+    startCommand: node dist/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sapadan-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGINS
+        value: "*"
+        # Ganti * dengan URL Vercel setelah deploy, contoh:
+        # https://sapadan-frontend.vercel.app,https://sapadan-driver.vercel.app
+
+databases:
+  - name: sapadan-db
+    plan: free
+    databaseName: sapadan
+    user: sapadan

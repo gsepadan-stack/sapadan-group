@@ -6,5 +6,11 @@ export default defineConfig({
   server: {
     port: 3001,
     host: true, // Allow access from mobile devices on same network
+    proxy: {
+      '/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+    },
   },
 });

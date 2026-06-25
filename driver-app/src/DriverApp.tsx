@@ -37,7 +37,7 @@ const makeTruckIcon = (speed = 0) => {
 
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
 interface Trip {
   id: string; vehicleId: string; tujuan: string; muatan?: string;
